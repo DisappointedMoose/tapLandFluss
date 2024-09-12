@@ -20,7 +20,6 @@ function tlf_timer() {
                 if(this.secondsLeft > 0) {
                     this.secondsLeft -= 1;
                 } else {
-                    clearInterval(this.interval);
                     window.dispatchEvent(new Event('tlf-timer-end'));
                 }
             }, 1000);

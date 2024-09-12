@@ -2,13 +2,19 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+@layer base {
+    [x-cloak] {
+        @apply !hidden
+    }
+}
+
 @layer components {
     .btn {
-        @apply cursor-pointer bg-vonCount-500 hover:bg-vonCount-400 text-white font-bold flex items-center justify-center px-2 border-b-4 border-vonCount-700 hover:border-vonCount-500 rounded-xl
+        @apply cursor-pointer bg-vonCount hover:bg-vonCount-200 text-white font-bold flex items-center justify-center px-2 border-b-4 border-vonCount-700 hover:border-vonCount-500 rounded-xl
     }
 
     .btn-primary {
-        @apply bg-blade-500 hover:bg-blade-400 border-blade-700 hover:border-blade-500 text-nosferatu-700
+        @apply bg-blade hover:bg-blade-200 border-blade-700 hover:border-blade-500 text-nosferatu-700
     }
 
     .btn-disabled {
@@ -16,10 +22,10 @@
     }
 
     .btn-secondary {
-        @apply bg-vonCount-500 hover:bg-vonCount-400 border-vonCount-700 hover:border-vonCount-500
+        @apply bg-vonCount hover:bg-vonCount-200 border-vonCount-700 hover:border-vonCount-500
     }
 
     .btn-danger {
-        @apply bg-marcelin-500 hover:bg-marcelin-400 border-marcelin-700 hover:border-marcelin-500
+        @apply bg-marcelin hover:bg-marcelin-200 border-marcelin-700 hover:border-marcelin-500
     }
 }

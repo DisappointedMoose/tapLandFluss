@@ -9,61 +9,150 @@
 <script defer src="bundle.js"></script></head>
 <body>
 <div id="viewport"
-     class="flex fixed h-full w-full overflow-hidden flex-col"
+     class="fixed h-full w-full overflow-hidden"
      x-data="tapLandFluss">
-    <!-- Menu -->
-    <div class="h-1/6 bg-nosferatu flex p-3">
-        <div class="w-full flex justify-between">
-            <div class="w-1/4 flex">
-                <div class="btn mx-1"
-                     :class="roundInProgress ? 'btn-danger' : 'btn-primary'"
-                     x-text="roundInProgress ? 'Cancel Round' : 'New Round'"
-                     @click="roundInProgress ? endRound() : openCategoryPicker()">
+
+    <!-- Gameboard Screen -->
+    <div class="flex w-full h-full flex-col">
+        <!-- Menu -->
+        <div class="h-1/6 bg-nosferatu flex p-3">
+            <div class="w-full flex justify-between">
+                <div class="w-1/4 flex">
+                    <div class="btn mx-1"
+                         :class="roundInProgress ? 'btn-danger' : 'btn-primary'"
+                         x-text="roundInProgress ? 'Cancel Round' : 'New Game'"
+                         @click="roundInProgress ? cancelRound() : openCategoryPicker()">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center">
+                    <div class="font-black text-4xl text-blade-500"
+                         :class="{
+                    'text-blade-500': (timer.secondsLeft >= 7),
+                    'text-morbius-500': (timer.secondsLeft >= 4 && timer.secondsLeft < 7),
+                    'text-marcelin-500': (timer.secondsLeft < 4),
+                 }"
+                         x-text="timer.secondsLeft"></div>
+                </div>
+
+                <div class="w-1/4 flex justify-end">
+                    <div class="btn btn-secondary mx-1" @click="showSettings()">Settings</div>
                 </div>
             </div>
+        </div>
 
-            <div class="flex items-center justify-center" x-data="timer">
-                <div class="font-black text-4xl text-blade-500"
-                     :class="{
-                    'text-blade-500': (secondsLeft >= 7),
-                    'text-morbius-500': (secondsLeft >= 4 && secondsLeft < 7),
-                    'text-marcelin-500': (secondsLeft < 4),
-                 }"
-                     x-text="secondsLeft"></div>
-            </div>
+        <!-- Game Board -->
+        <div class="h-4/6 bg-aro grid grid-cols-9 gap-3 p-3 relative">
+            <div class="absolute top-0 left-0 w-full h-full opacity-80 bg-nosferatu" x-show="!roundInProgress"></div>
 
-            <div class="w-1/4 flex justify-end">
-                <div class="btn btn-secondary mx-1">Settings</div>
+            <template x-for="letter in letters">
+                <div class="btn uppercase"
+                     @click="useLetter(letter)"
+                     :class="canUseLetter(letter) ? 'btn-primary' : 'btn-disabled'">
+                    <span x-text="letter"></span>
+                </div>
+            </template>
+        </div>
+
+        <!-- Footer -->
+        <div class="h-1/6 bg-nosferatu flex justify-between items-center p-3">
+            <div class="flex items-center text-3xl font-bold text-buffy-500" x-text="activeCategory"></div>
+            <div class="flex justify-end">
+                <template x-for="(player, index) in players.players" :key="index">
+                    <div class="h-12 w-12 flex items-center justify-center text-3xl font-bold rounded-xl uppercase border-blade-500 border-2 mx-1"
+                         :class="player.color
+                                 + (players.activePlayer === index ? ' animate-bounce' : '')
+                                 + (!player.alive ? ' opacity-35' : '')"
+                         x-text="player.name.charAt(0)"></div>
+                </template>
             </div>
         </div>
     </div>
 
-    <!-- Game Board -->
-    <div class="h-4/6 bg-aro grid grid-cols-9 gap-3 p-3 relative">
-        <div class="absolute top-0 left-0 w-full h-full opacity-80 bg-nosferatu" x-show="!roundInProgress"></div>
-        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center"
-             x-show="displayCategoryPicker">
+    <!-- Winner Screen -->
+    <div x-cloak
+         x-show="currentScreen === 'winner'"
+         @click="openCategoryPicker()"
+         class="absolute top-0 left-0 w-full h-full">
+        <div class="absolute top-0 left-0 w-full h-full opacity-80 bg-nosferatu z-10"></div>
+        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center z-20">
             <div class="flex justify-center text-6xl font-bold text-blade-500 my-6 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
-                 x-text="category"></div>
+                 x-text="players.players[players.activePlayer].name"></div>
+            <div class="flex justify-center text-4xl font-bold text-blade-500 my-6 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+                wins!
+            </div>
+            <div class="flex justify-center text-2xl font-bold text-blade-500 my-6 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
+                Click or tap to start a new game.
+            </div>
+        </div>
+    </div>
+
+    <!-- CategoryPicker Screen -->
+    <div x-cloak
+         x-show="currentScreen === 'categoryPicker'"
+         class="absolute top-0 left-0 w-full h-full">
+        <div class="absolute top-0 left-0 w-full h-full opacity-80 bg-nosferatu z-10"></div>
+        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center z-20">
+            <div class="flex justify-center text-6xl font-bold text-blade-500 my-6 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
+                 x-text="activeCategory"></div>
             <div class="flex justify-center my-6">
                 <div class="btn btn-primary h-14 mx-5" @click="startRound()">Start Round</div>
                 <div class="btn btn-secondary h-14 mx-5" @click="pickCategory()">New Category</div>
             </div>
         </div>
-
-        <template x-for="letter in letters">
-            <div class="btn uppercase"
-                 @click="useLetter(letter)"
-                 :class="canUseLetter(letter) ? 'btn-primary' : 'btn-disabled'">
-                <span x-text="letter"></span>
-            </div>
-        </template>
     </div>
 
-    <!-- Footer -->
-    <div class="h-1/6 bg-nosferatu flex justify-center items-center">
-        <div class="flex items-center text-3xl font-bold text-buffy-500" x-text="category"
-             x-show="!displayCategoryPicker"></div>
+    <!-- Settings Screen -->
+    <div x-cloak
+         x-show="currentScreen === 'settings'"
+         class="absolute top-0 left-0 w-full h-full">
+        <div class="absolute top-0 left-0 w-full h-full opacity-80 bg-nosferatu z-10"></div>
+        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center z-20">
+            <div class="h-1/6 w-full flex justify-end p-3">
+                <div class="btn btn-secondary mx-1" @click="hideSettings()">Close Settings</div>
+            </div>
+            <div class="h-5/6 px-5 w-full flex">
+                <div class="w-2/6 px-5 overflow-y-scroll">
+                    <h1 class="text-morbius text-xl font-bold my-4 text-center">Players</h1>
+                    <div class="flex justify-center my-4">
+                        <div @click="players.addPlayer()" class="btn text-xl h-12 w-12 mx-4 btn-primary">+</div>
+                        <div @click="players.removePlayer()" class="btn text-xl h-12 w-12 mx-4 btn-danger">-</div>
+                    </div>
+                    <template x-for="(player, index) in players.players" :key="index">
+                        <div class="flex my-4">
+                                <span class="h-12 w-12 flex items-center justify-center text-morbius text-xl font-bold mx-2"
+                                      x-text="'#' + (index + 1)"></span>
+                            <label :for="'input-player-' + index" class="h-12 w-12 rounded-xl rounded-r-none"
+                                   :class="player.color"></label>
+                            <input :id="'input-player-' + index" x-model="players.players[index]['name']"
+                                   class="h-12 w-full px-4 py-2 border rounded-xl rounded-l-none"/>
+                        </div>
+                    </template>
+                </div>
+                <div class="w-2/6 px-5">
+                    <h1 class="text-morbius text-xl font-bold my-4 text-center">Game Settings</h1>
+                    <div class="flex my-4">
+                        <label for="adultCategoriesToggle"
+                               class="flex items-center cursor-pointer select-none text-dark dark:text-white">
+                            <div class="relative">
+                                <input type="checkbox"
+                                       id="adultCategoriesToggle"
+                                       class="peer sr-only"
+                                       x-model="categories.includeAdultCategories"/>
+                                <div class="block h-8 rounded-full bg-marcelin w-14 peer-checked:bg-blade"></div>
+                                <div class="absolute w-6 h-6 transition bg-white rounded-full left-1 top-1 peer-checked:translate-x-full peer-checked:bg-primary"></div>
+                            </div>
+                            <div class="text-morbius text-xl font-bold mx-4">Include adult topics</div>
+                        </label>
+                    </div>
+                    <div class="flex my-4">
+                        <input id="input-round-time" x-model="timer.maxSeconds"
+                               class="h-8 w-14 px-4 py-2 border rounded-xl"/>
+                        <label for="input-round-time" class="text-morbius text-xl font-bold mx-4">Round Time</label>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>

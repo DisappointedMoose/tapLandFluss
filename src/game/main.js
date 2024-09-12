@@ -1,20 +1,26 @@
 import './timer';
-import tlf_categories from './categories.json';
-import tlf_adult_categories from './adult_categories.json';
+import './players';
+import './categories';
 
 function tapLandFluss() {
     return {
-        displayCategoryPicker: false,
+        currentScreen: 'gameboard',
         roundInProgress: false,
         usedLetters: [],
         letters: [],
-        includeAdultCategories: false,
         timer: null,
-        category: '',
+        players: null,
+        categories: null,
+        activeCategory: '',
 
         init: function () {
             this.initLetters();
+
             this.timer = tlf_timer();
+            this.categories = tlf_categories();
+
+            this.players = tlf_players();
+            this.players.init();
 
             this.registerEvents();
         },
@@ -32,7 +38,13 @@ function tapLandFluss() {
         useLetter: function (letter) {
             if (this.canUseLetter(letter)) {
                 this.usedLetters.push(letter);
+
+                if(this.usedLetters.length === this.letters.length) {
+                    this.usedLetters = [];
+                }
+
                 this.timer.reset();
+                this.players.activateNextPlayer();
             }
         },
 
@@ -42,34 +54,54 @@ function tapLandFluss() {
 
         startRound: function () {
             this.usedLetters = [];
+            this.players.reviveAllPlayers();
             this.timer.startTimer();
             this.roundInProgress = true;
-            this.displayCategoryPicker = false;
+            this.currentScreen = 'gameboard';
         },
 
         endRound: function () {
             this.timer.stopTimer();
             this.timer.reset();
             this.roundInProgress = false;
+            this.currentScreen = 'winner';
+        },
+
+        cancelRound: function () {
+            this.timer.stopTimer();
+            this.timer.reset();
+            this.roundInProgress = false;
+            this.currentScreen = 'gameboard';
         },
 
         openCategoryPicker: function () {
-            this.displayCategoryPicker = true;
+            this.currentScreen = 'categoryPicker';
             this.pickCategory();
         },
 
         pickCategory: function () {
-            let categories = tlf_categories;
-            if(this.includeAdultCategories) {
-                categories = categories.concat(tlf_adult_categories);
-            }
+            let categories = this.categories.getList();
 
             let randomIndex = Math.floor(Math.random() * categories.length);
-            this.category = categories[randomIndex];
+            this.activeCategory = categories[randomIndex];
         },
 
         observerTimerEnd: function () {
-            this.endRound();
+            this.players.eliminateCurrentPlayer();
+            this.players.activateNextPlayer();
+            if (this.players.getAlivePlayerCount() > 1) {
+                this.timer.reset();
+            } else {
+                this.endRound();
+            }
+        },
+
+        showSettings: function () {
+            this.currentScreen = 'settings';
+        },
+
+        hideSettings: function () {
+            this.currentScreen = 'gameboard';
         }
     }
 }
