@@ -12,6 +12,7 @@ function tapLandFluss() {
         players: null,
         categories: null,
         activeCategory: '',
+        isFullscreen: false,
 
         init: function () {
             this.initLetters();
@@ -102,6 +103,16 @@ function tapLandFluss() {
 
         hideSettings: function () {
             this.currentScreen = 'gameboard';
+        },
+
+        toggleFullscreen: function () {
+            if(!this.isFullscreen) {
+                document.documentElement.requestFullscreen()
+            } else {
+                document.exitFullscreen()
+            }
+
+            this.isFullscreen = !this.isFullscreen;
         }
     }
 }
